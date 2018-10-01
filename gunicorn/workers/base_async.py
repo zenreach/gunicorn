@@ -35,6 +35,7 @@ class AsyncWorker(base.Worker):
         req = None
         try:
             parser = http.RequestParser(self.cfg, client)
+            parser.glog = self.log
             try:
                 listener_name = listener.getsockname()
                 if not self.cfg.keepalive:

@@ -6,6 +6,15 @@
 from gunicorn.http.message import Request
 from gunicorn.http.unreader import SocketUnreader, IterUnreader
 
+glog=None
+
+
+def log_no_die(base, *args):
+    try:
+        glog.debug(base.format(args))
+    except Exception:
+        glog("BG: log_no_die died :( ")
+
 
 class Parser(object):
 
@@ -28,6 +37,7 @@ class Parser(object):
     def __next__(self):
         # Stop if HTTP dictates a stop.
         if self.mesg and self.mesg.should_close():
+            glog.debug("BG: parser: stopIteration top")
             raise StopIteration()
 
         # Discard any unread body of the previous message
@@ -35,12 +45,18 @@ class Parser(object):
             data = self.mesg.body.read(8192)
             while data:
                 data = self.mesg.body.read(8192)
+            log_no_die("BG: parser.data: {}", data)
 
         # Parse the next request
         self.req_count += 1
         self.mesg = self.mesg_class(self.cfg, self.unreader, self.req_count)
+
+        log_no_die("BG: parser.mesg: {}", self.mesg)
+
         if not self.mesg:
+            glog.debug("BG: parser: stopIteration bottom")
             raise StopIteration()
+
         return self.mesg
 
     next = __next__
@@ -49,3 +65,4 @@ class Parser(object):
 class RequestParser(Parser):
 
     mesg_class = Request
+
