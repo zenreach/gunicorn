@@ -119,6 +119,8 @@ class EventletWorker(AsyncWorker):
         super(EventletWorker, self).handle(listener, client, addr)
 
     def run(self):
+        self.log.debug("BG: start run loop")
+
         acceptors = []
         for sock in self.sockets:
             gsock = GreenSocket(sock)
@@ -134,15 +136,20 @@ class EventletWorker(AsyncWorker):
             self.notify()
             eventlet.sleep(1.0)
 
+        self.log.debug("BG: exit while self.alive")
         self.notify()
+
         try:
             with eventlet.Timeout(self.cfg.graceful_timeout) as t:
                 for a in acceptors:
+                    self.log.debug("BG: killing acceptors (try)")
                     a.kill(eventlet.StopServe())
                 for a in acceptors:
                     a.wait()
         except eventlet.Timeout as te:
             if te != t:
+                self.log.debug("BG: except - raising")
                 raise
             for a in acceptors:
+                self.log.debug("BG: killing acceptor (except)")
                 a.kill()
