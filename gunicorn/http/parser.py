@@ -33,10 +33,14 @@ class Parser(object):
 
         # Discard any unread body of the previous message
         if self.mesg:
-            self.glog.debug("BG:  parser: have mesg, reading data")
+            self.glog.debug("BG:  parser: have mesg, reading data for {}".format(self.mesg.path))
             data = self.mesg.body.read(8192)
             while data:
                 data = self.mesg.body.read(8192)
+            try:
+                self.glog.debug("BG: parser: discarded data: {}".format(data))
+            except Exception:
+                pass
         else:
             self.glog.debug("BG: parser: no mesg")
 
