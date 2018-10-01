@@ -74,12 +74,16 @@ def _eventlet_stop(client, server, conn):
     glog.debug("BG: geventlet._eventlet_stop")
     try:
         try:
+            glog.debug("BG: geventlet._eventlet_stop client.wait")
             client.wait()
         finally:
+            glog.debug("BG: geventlet._eventlet_stop conn.close")
             conn.close()
     except greenlet.GreenletExit:
+        glog.debug("BG: geventlet._eventlet_stop GreenletExit")
         pass
     except Exception:
+        glog.debug("BG: geventlet._eventlet_stop  greenthread.kill")
         greenthread.kill(server, *sys.exc_info())
 
 
