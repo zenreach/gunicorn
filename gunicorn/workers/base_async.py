@@ -48,7 +48,9 @@ class AsyncWorker(base.Worker):
                         req = None
                         with self.timeout_ctx():
                             req = six.next(parser)
+                            self.log.debug("BG: base_async: got request (keepalive loop)")
                         if not req:
+                            self.log.debug("BG: base_async: got EMPTY request")
                             break
                         if req.proxy_protocol_info:
                             proxy_protocol_info = req.proxy_protocol_info

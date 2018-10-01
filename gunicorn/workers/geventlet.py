@@ -26,6 +26,8 @@ import greenlet
 from gunicorn.http.wsgi import sendfile as o_sendfile
 from gunicorn.workers.base_async import AsyncWorker
 
+glog = None
+
 def _eventlet_sendfile(fdout, fdin, offset, nbytes):
     while True:
         try:
@@ -51,10 +53,12 @@ def _eventlet_serve(sock, handle, concurrency):
     while True:
         try:
             conn, addr = sock.accept()
+            glog.debug("BG: geventlet._eventlet_serve: accepting socket conn")
             gt = pool.spawn(handle, conn, addr)
             gt.link(_eventlet_stop, server_gt, conn)
             conn, addr, gt = None, None, None
         except eventlet.StopServe:
+            glog.debug("BG: geventlet._eventlet_serve: closing socket conn")
             sock.close()
             pool.waitall()
             return
@@ -67,6 +71,7 @@ def _eventlet_stop(client, server, conn):
     This code is lifted from eventlet so as not to depend on undocumented
     functions in the library.
     """
+    glog.debug("BG: geventlet._eventlet_stop")
     try:
         try:
             client.wait()
@@ -122,6 +127,9 @@ class EventletWorker(AsyncWorker):
         super(EventletWorker, self).handle(listener, client, addr)
 
     def run(self):
+        global glog
+        glog = self.log
+
         self.log.debug("BG: geneventlet: start run loop")
 
         acceptors = []
