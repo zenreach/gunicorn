@@ -23,7 +23,7 @@ class StopWaiting(Exception):
 
 class SyncWorker(base.Worker):
 
-    def accept(self, listener):
+    def listener(self, listener):
         client, addr = listener.accept()
         client.setblocking(1)
         util.close_on_exec(client)

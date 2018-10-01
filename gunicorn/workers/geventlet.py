@@ -103,12 +103,15 @@ class EventletWorker(AsyncWorker):
         self.patch()
 
     def handle_quit(self, sig, frame):
+        self.log.debug("BG: geneventlet.handle_quit")
         eventlet.spawn(super(EventletWorker, self).handle_quit, sig, frame)
 
     def handle_usr1(self, sig, frame):
+        self.log.debug("BG: geneventlet.handle_usr1")
         eventlet.spawn(super(EventletWorker, self).handle_usr1, sig, frame)
 
     def timeout_ctx(self):
+        self.log.debug("BG: geneventlet.timeout_ctx")
         return eventlet.Timeout(self.cfg.keepalive or None, False)
 
     def handle(self, listener, client, addr):
@@ -119,7 +122,7 @@ class EventletWorker(AsyncWorker):
         super(EventletWorker, self).handle(listener, client, addr)
 
     def run(self):
-        self.log.debug("BG: start run loop")
+        self.log.debug("BG: geneventlet: start run loop")
 
         acceptors = []
         for sock in self.sockets:
@@ -136,20 +139,20 @@ class EventletWorker(AsyncWorker):
             self.notify()
             eventlet.sleep(1.0)
 
-        self.log.debug("BG: exit while self.alive")
+        self.log.debug("BG: geneventlet: exit while self.alive")
         self.notify()
 
         try:
             with eventlet.Timeout(self.cfg.graceful_timeout) as t:
                 for a in acceptors:
-                    self.log.debug("BG: killing acceptors (try)")
+                    self.log.debug("BG: geneventlet: killing acceptors (try)")
                     a.kill(eventlet.StopServe())
                 for a in acceptors:
                     a.wait()
         except eventlet.Timeout as te:
             if te != t:
-                self.log.debug("BG: except - raising")
+                self.log.debug("BG: geneventlet: except - raising")
                 raise
             for a in acceptors:
-                self.log.debug("BG: killing acceptor (except)")
+                self.log.debug("BG: geneventlet: killing acceptor (except)")
                 a.kill()

@@ -39,6 +39,7 @@ class AsyncWorker(base.Worker):
                 listener_name = listener.getsockname()
                 if not self.cfg.keepalive:
                     req = six.next(parser)
+                    self.log.debug("BG: base_async: about to handle a request (cfg.keepalive)")
                     self.handle_request(listener_name, req, client, addr)
                 else:
                     # keepalive loop
@@ -53,18 +54,22 @@ class AsyncWorker(base.Worker):
                             proxy_protocol_info = req.proxy_protocol_info
                         else:
                             req.proxy_protocol_info = proxy_protocol_info
+                        self.log.debug("BG: base_async: about to handle a request (else)")
                         self.handle_request(listener_name, req, client, addr)
             except http.errors.NoMoreData as e:
                 self.log.debug("Ignored premature client disconnection. %s", e)
             except StopIteration as e:
                 self.log.debug("Closing connection. %s", e)
             except ssl.SSLError:
+                self.log.debug("BG: base_async: SSL error on handle")
                 # pass to next try-except level
                 six.reraise(*sys.exc_info())
             except EnvironmentError:
                 # pass to next try-except level
+                self.log.debug("BG: base_async: EnvironmentError error on handle")
                 six.reraise(*sys.exc_info())
             except Exception as e:
+                self.log.debug("BG: base_async: Exception on handle")
                 self.handle_error(req, client, addr, e)
         except ssl.SSLError as e:
             if e.args[0] == ssl.SSL_ERROR_EOF:
@@ -82,6 +87,7 @@ class AsyncWorker(base.Worker):
                 else:
                     self.log.debug("Ignoring EPIPE")
         except Exception as e:
+            self.log.debug("BG: base_async: handle top level Exception")
             self.handle_error(req, client, addr, e)
         finally:
             util.close(client)
